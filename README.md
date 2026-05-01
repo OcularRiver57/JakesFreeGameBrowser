@@ -1,6 +1,4 @@
 # JakesFreeGameBrowser
-# Welcome to your Expo app 👋
-
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started
@@ -26,26 +24,28 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
+**Name**
+Jake's Free Game Browser and Wishlist
 
-When you're ready, run:
+**Overview**
+Will use multiple web APIs to show the user games that are free or on sale and allow user to add games from websites to a wishlist and get notified when they go on sale or giveaway. user will also be able to export and import wishlists for sharing with others
 
-```bash
-npm run reset-project
-```
+**Behaviors***
+ - Home page will have buttons to Free games, Game Deals, and Wishlists screens.
+ - Free Games and Game Deals will have lists of games with pictures titles prices and links to games. 
+ - Wishlists (plural) page will have one or more wishlists displayed like games with a picture of a game from the list and a title for the list
+ - Wishlist page will display like Free games / Game deals page showing the same things.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+**Product Backlog**
+ - Show list of games obtained from API < MVP
+ - Take user to game deal when clicking link < MVP
+ - Show Images for each game from store page
+ - Filter games by store, price, platform, and possibly more.
+ - Allow user to make wishlist
+    - save game to wishlist 
+    - add game by URL
+    - check if wishlist games are on sale
+    - import / export lists
+    - share list with link or QR code or something
+    - make database for user accounts and wishlists to allow for sharing lists like amazon.
+    - add friends and see their wishlists
