@@ -1,6 +1,10 @@
 import { StyleSheet, View, Text, TouchableOpacity, Image } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
+import { useState, useEffect } from "react";
+import { isDebugMode } from "../APIs/debugMode";
+import { on as onEvent } from "../APIs/eventBus";
+import GameDebugModal from "./GameDebugModal";
 
 const styles = StyleSheet.create({
 	card: {
@@ -17,6 +21,9 @@ const styles = StyleSheet.create({
 		width: "100%",
 		height: 150,
 		backgroundColor: "#1a1a1a",
+	},
+	imageButton: {
+		width: "100%",
 	},
 	cardContent: {
 		padding: 12,
@@ -81,9 +88,26 @@ const styles = StyleSheet.create({
 });
 
 export function GameCard({ game, onAddToWishlist, showPrice = true }) {
+	const [debugEnabled, setDebugEnabled] = useState(isDebugMode());
+	const [debugVisible, setDebugVisible] = useState(false);
+
+	useEffect(() => {
+		const unsub = onEvent("debug_mode_changed", (val) => {
+			setDebugEnabled(Boolean(val));
+		});
+		return () => unsub && unsub();
+	}, []);
 	const handleOpenLink = async () => {
-		if (game.open_giveaway_url) {
-			await WebBrowser.openBrowserAsync(game.open_giveaway_url);
+		const link =
+			game.link ||
+			game.storeLink ||
+			game.open_giveaway_url ||
+			game.giveaway_url ||
+			game.url;
+
+		if (link) {
+			console.log(`${game.title || game.name || "Unknown Game"}: ${link}`);
+			await WebBrowser.openBrowserAsync(link);
 		}
 	};
 
@@ -103,14 +127,21 @@ export function GameCard({ game, onAddToWishlist, showPrice = true }) {
 	return (
 		<View style={styles.card}>
 			{imageUri && (
-				<Image
-					source={{ uri: imageUri }}
-					style={styles.cardImage}
-					resizeMode="cover"
-					onError={() => {
-						// Image will show placeholder color if load fails
-					}}
-				/>
+				<TouchableOpacity
+					style={styles.imageButton}
+					onPress={handleOpenLink}
+					activeOpacity={0.85}
+					disabled={!game.link && !game.storeLink && !game.open_giveaway_url && !game.giveaway_url && !game.url}
+				>
+					<Image
+						source={{ uri: imageUri }}
+						style={styles.cardImage}
+						resizeMode="cover"
+						onError={() => {
+							// Image will show placeholder color if load fails
+							}}
+					/>
+				</TouchableOpacity>
 			)}
 
 			<View style={styles.cardContent}>
@@ -157,6 +188,15 @@ export function GameCard({ game, onAddToWishlist, showPrice = true }) {
 						<TouchableOpacity onPress={() => onAddToWishlist(game)}>
 							<MaterialCommunityIcons name="heart-outline" size={20} color="#ff6b6b" />
 						</TouchableOpacity>
+					)}
+
+					{debugEnabled && (
+						<>
+							<TouchableOpacity onPress={() => setDebugVisible(true)} style={{ marginLeft: 8 }}>
+								<MaterialCommunityIcons name="code-tags" size={20} color="#80ff80" />
+							</TouchableOpacity>
+							<GameDebugModal visible={debugVisible} onClose={() => setDebugVisible(false)} data={game} title={game.title || game.name} />
+						</>
 					)}
 				</View>
 			</View>

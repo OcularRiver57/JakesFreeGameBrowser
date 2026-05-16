@@ -5,11 +5,6 @@ export function useWishlist() {
 	const [wishlists, setWishlists] = useState([]);
 	const [loading, setLoading] = useState(false);
 
-	// Load wishlists on mount
-	useEffect(() => {
-		loadWishlists();
-	}, [loadWishlists]);
-
 	const loadWishlists = useCallback(async () => {
 		try {
 			setLoading(true);
@@ -21,6 +16,11 @@ export function useWishlist() {
 			setLoading(false);
 		}
 	}, []);
+
+	// Load wishlists on mount
+	useEffect(() => {
+		loadWishlists();
+	}, [loadWishlists]);
 
 	const createWishlist = useCallback(async (name, description = "") => {
 		try {

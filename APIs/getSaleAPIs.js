@@ -1,8 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { readCache, writeCache } from "./cacheStorage";
 
 const GAMERPOWER_BASE_URL = "https://www.gamerpower.com/api";
 const GAMERPOWER_GIVEAWAYS_URL = `${GAMERPOWER_BASE_URL}/giveaways`;
-const GAMERPOWER_STORAGE_KEY = "@JakesFreeGameBrowser:gamerpower_giveaways";
+const GAMERPOWER_NAMESPACE = "gamerpower";
 const GAMERPOWER_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 function buildQueryString(params = {}) {
@@ -71,33 +71,17 @@ export function sortGiveaways(giveaways = [], sortBy = "date", order = "desc") {
 	});
 }
 
-async function readCachedGiveaways() {
-	const rawCache = await AsyncStorage.getItem(GAMERPOWER_STORAGE_KEY);
-
-	if (!rawCache) {
-		return null;
-	}
-
-	try {
-		const parsedCache = JSON.parse(rawCache);
-
-		if (!parsedCache || typeof parsedCache !== "object") {
-			return null;
-		}
-
-		return parsedCache;
-	} catch {
-		return null;
-	}
+async function readCachedGiveaways(cacheKey) {
+	return await readCache(GAMERPOWER_NAMESPACE, cacheKey);
 }
 
-async function writeCachedGiveaways(data) {
+async function writeCachedGiveaways(cacheKey, data) {
 	const cachePayload = {
 		updatedAt: new Date().toISOString(),
 		data: normalizeGiveaways(data),
 	};
 
-	await AsyncStorage.setItem(GAMERPOWER_STORAGE_KEY, JSON.stringify(cachePayload));
+	await writeCache(GAMERPOWER_NAMESPACE, cacheKey, cachePayload, GAMERPOWER_CACHE_TTL_MS);
 	return cachePayload;
 }
 
@@ -115,8 +99,9 @@ export async function fetchGamerPowerGiveaways(options = {}) {
 }
 
 export async function refreshGamerPowerCache(options = {}) {
+	const cacheKey = JSON.stringify(options);
 	const giveaways = await fetchGamerPowerGiveaways(options);
-	const cached = await writeCachedGiveaways(giveaways);
+	const cached = await writeCachedGiveaways(cacheKey, giveaways);
 
 	return {
 		giveaways,
@@ -127,7 +112,8 @@ export async function refreshGamerPowerCache(options = {}) {
 
 export async function getCachedGamerPowerGiveaways(options = {}) {
 	const { sortBy = "date", order = "desc" } = options;
-	const cached = await readCachedGiveaways();
+	const cacheKey = JSON.stringify(options);
+	const cached = await readCachedGiveaways(cacheKey);
 
 	if (!cached || !cached.data || !cached.updatedAt) {
 		return sortGiveaways([], sortBy, order);
@@ -138,7 +124,8 @@ export async function getCachedGamerPowerGiveaways(options = {}) {
 
 export async function getGamerPowerGiveaways(options = {}) {
 	const { forceRefresh = false, platform, type, sortBy = "date", order = "desc" } = options;
-	const cached = await readCachedGiveaways();
+	const cacheKey = JSON.stringify({ platform, type, sortBy });
+	const cached = await readCachedGiveaways(cacheKey);
 	const updatedAt = cached?.updatedAt ? Date.parse(cached.updatedAt) : 0;
 	const isCacheStale = !updatedAt || Date.now() - updatedAt > GAMERPOWER_CACHE_TTL_MS;
 
@@ -151,10 +138,11 @@ export async function getGamerPowerGiveaways(options = {}) {
 }
 
 export async function clearGamerPowerCache() {
-	await AsyncStorage.removeItem(GAMERPOWER_STORAGE_KEY);
+	const { clearNamespaceCache } = await import("./cacheStorage");
+	await clearNamespaceCache(GAMERPOWER_NAMESPACE);
 }
 
 export const gamerPowerCacheConfig = {
-	storageKey: GAMERPOWER_STORAGE_KEY,
+	namespace: GAMERPOWER_NAMESPACE,
 	ttlMs: GAMERPOWER_CACHE_TTL_MS,
 };

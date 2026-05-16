@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet, Linking } from "react-native";
 import { useRouter } from "expo-router";
 
 const styles = StyleSheet.create({
@@ -40,6 +40,24 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontWeight: "600",
 	},
+	footer: {
+		position: "absolute",
+		bottom: 16,
+		left: 0,
+		right: 0,
+		alignItems: "center",
+		paddingHorizontal: 20,
+	},
+	attributionText: {
+		fontSize: 11,
+		color: "#666",
+		textAlign: "center",
+		lineHeight: 16,
+	},
+	attributionLink: {
+		color: "#0066cc",
+		textDecorationLine: "underline",
+	},
 });
 
 export default function Home() {
@@ -48,6 +66,8 @@ export default function Home() {
 	const handleFreeGames = () => router.push("/(tabs)/free-games");
 	const handleGameDeals = () => router.push("/(tabs)/game-deals");
 	const handleWishlists = () => router.push("/(tabs)/wishlists");
+	const handleOpenGamerPower = () => Linking.openURL("https://www.gamerpower.com");
+	const handleOpenCheapShark = () => Linking.openURL("https://www.cheapshark.com");
 
 	return (
 		<View style={styles.container}>
@@ -68,6 +88,19 @@ export default function Home() {
 				<TouchableOpacity style={styles.button} onPress={handleWishlists}>
 					<Text style={styles.buttonText}>My Wishlists</Text>
 				</TouchableOpacity>
+			</View>
+
+			<View style={styles.footer}>
+				<Text style={styles.attributionText}>
+					Game data provided by{" "}
+					<TouchableOpacity onPress={handleOpenGamerPower}>
+						<Text style={styles.attributionLink}>GamerPower.com</Text>
+				</TouchableOpacity>
+				{" "}and{" "}
+				<TouchableOpacity onPress={handleOpenCheapShark}>
+					<Text style={styles.attributionLink}>CheapShark</Text>
+				</TouchableOpacity>
+			</Text>
 			</View>
 		</View>
 	);

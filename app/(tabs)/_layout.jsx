@@ -1,6 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { RefreshMenu } from "../../components/RefreshMenu";
 
 export default function TabsLayout() {
 	return (
@@ -34,6 +35,7 @@ export default function TabsLayout() {
 						<MaterialCommunityIcons name="gift" color={color} size={size} />
 					),
 					headerTitle: "Free Games",
+					headerRight: () => <RefreshMenu eventName="refresh_free_games" />,
 				}}
 			/>
 
@@ -46,6 +48,7 @@ export default function TabsLayout() {
 						<MaterialCommunityIcons name="tag-multiple" color={color} size={size} />
 					),
 					headerTitle: "Game Deals",
+					headerRight: () => <RefreshMenu eventName="refresh_game_deals" />,
 				}}
 			/>
 

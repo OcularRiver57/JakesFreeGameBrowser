@@ -1,7 +1,10 @@
 import { StyleSheet, View, FlatList, ActivityIndicator, Text } from "react-native";
 import { useState, useEffect, useCallback } from "react";
 import { GameCard } from "../../components/GameCard";
+import { AddToWishlistModal } from "../../components/AddToWishlistModal";
+import { on as onEvent } from "../../APIs/eventBus";
 import { getGamerPowerGiveaways } from "../../APIs/getSaleAPIs";
+import { clearNamespaceCache } from "../../APIs/cacheStorage";
 import { useWishlist } from "../../hooks/useWishlist";
 
 function isFreeGame(game) {
@@ -29,6 +32,13 @@ const styles = StyleSheet.create({
 		backgroundColor: "#1a1a1a",
 		paddingHorizontal: 12,
 		paddingTop: 12,
+	},
+	header: {
+		flexDirection: "row",
+		justifyContent: "flex-end",
+		paddingHorizontal: 8,
+		paddingVertical: 8,
+		marginBottom: 4,
 	},
 	listContent: {
 		paddingBottom: 20,
@@ -67,7 +77,9 @@ export default function FreeGamesScreen() {
 	const [games, setGames] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
-	const { addGameToWishlist } = useWishlist();
+	const [showWishlistModal, setShowWishlistModal] = useState(false);
+	const [selectedGameForWishlist, setSelectedGameForWishlist] = useState(null);
+	const { wishlists, addGameToWishlist, createWishlist } = useWishlist();
 
 	const loadFreeGames = useCallback(async () => {
 		try {
@@ -95,19 +107,69 @@ export default function FreeGamesScreen() {
 	}, [loadFreeGames]);
 
 	const handleAddToWishlist = (game) => {
-		addGameToWishlist({
-			id: game.id || Math.random().toString(),
-			title: game.title,
-			image: game.image,
-			url: game.open_giveaway_url,
-			worth: game.worth,
-			type: game.type,
-			platform: game.platform || game.platforms,
-			store: game.store || game.storeName || game.store_name,
-			source: "GamerPower",
-			addedAt: new Date().toISOString(),
-		});
+		setSelectedGameForWishlist(game);
+		setShowWishlistModal(true);
 	};
+
+	const handleSelectWishlist = async (wishlistId) => {
+		if (selectedGameForWishlist) {
+			try {
+				await addGameToWishlist(
+					{
+						id: selectedGameForWishlist.id || Math.random().toString(),
+						title: selectedGameForWishlist.title,
+						image: selectedGameForWishlist.image,
+						url: selectedGameForWishlist.open_giveaway_url,
+						link: selectedGameForWishlist.open_giveaway_url,
+						storeLink: selectedGameForWishlist.open_giveaway_url,
+						steamAppID:
+							selectedGameForWishlist.steamAppID ||
+							selectedGameForWishlist.steamAppId ||
+							selectedGameForWishlist.steam_app_id ||
+							null,
+						worth: selectedGameForWishlist.worth,
+						type: selectedGameForWishlist.type,
+						platform: selectedGameForWishlist.platform || selectedGameForWishlist.platforms,
+						store: selectedGameForWishlist.store || selectedGameForWishlist.storeName || selectedGameForWishlist.store_name,
+						source: "GamerPower",
+						addedAt: new Date().toISOString(),
+					},
+					wishlistId
+				);
+				setShowWishlistModal(false);
+				setSelectedGameForWishlist(null);
+			} catch (err) {
+				console.error("Error adding game to wishlist:", err);
+			}
+		}
+	};
+
+	const handleCreateNewWishlist = async (name) => {
+		try {
+			const newWishlist = await createWishlist(name, "");
+			await handleSelectWishlist(newWishlist.id);
+		} catch (err) {
+			console.error("Error creating new wishlist:", err);
+			throw err;
+		}
+	};
+
+	const handleRefresh = async () => {
+		try {
+			await clearNamespaceCache("gamerpower");
+			await loadFreeGames();
+		} catch (err) {
+			console.error("Error refreshing games:", err);
+		}
+	};
+
+	// Subscribe to header refresh event
+	useEffect(() => {
+		const unsub = onEvent("refresh_free_games", () => {
+			handleRefresh();
+		});
+		return () => unsub && unsub();
+	}, [loadFreeGames]);
 
 	if (loading) {
 		return (
@@ -136,6 +198,7 @@ export default function FreeGamesScreen() {
 
 	return (
 		<View style={styles.container}>
+			{/* header menu moved to Tabs layout headerRight */}
 			<FlatList
 				data={games}
 				renderItem={({ item }) => (
@@ -144,6 +207,16 @@ export default function FreeGamesScreen() {
 				keyExtractor={(item) => item.id.toString()}
 				contentContainerStyle={styles.listContent}
 				scrollIndicatorInsets={{ right: 1 }}
+			/>
+			<AddToWishlistModal
+				visible={showWishlistModal}
+				wishlists={wishlists}
+				onSelectWishlist={handleSelectWishlist}
+				onCreateNew={handleCreateNewWishlist}
+				onCancel={() => {
+					setShowWishlistModal(false);
+					setSelectedGameForWishlist(null);
+				}}
 			/>
 		</View>
 	);
